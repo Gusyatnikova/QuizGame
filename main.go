@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 	"strings"
 	"time"
@@ -19,7 +20,7 @@ func ParseCSV(fileName string) [][]string {
 	csvContent, readerErr := csvReader.ReadAll()
 	for _, problem := range csvContent {
 		problem[0] = strings.TrimSpace(problem[0])
-		problem[1] = strings.TrimSpace(problem[1])
+		problem[1] = strings.ToLower(strings.TrimSpace(problem[1]))
 	}
 	if readerErr != nil {
 		log.Fatal("Cannot parse file "+fileName+" as CSV", readerErr)
@@ -37,12 +38,25 @@ func askInput() {
 	fmt.Scanln()
 }
 
+func Shuffle(slice [][]string) [][]string {
+	dst := make([][]string, len(slice))
+	perm := rand.Perm(len(slice))
+	for i, v := range perm {
+		dst[v] = slice[i]
+	}
+	return dst
+}
+
 func main() {
 	quizFile := flag.String("csv", "problems.csv",
 		"a csv file in the format of \"question, answer\" (default \"problems.csv\"")
 	timeLimit := flag.Int("limit", 30, "the time limit for the quiz in seconds (default 30)")
+	shuffle := flag.Bool("shuffle", false, "if shuffle is true, questions in quiz will be shuffled (default is false)")
 	flag.Parse()
 	quiz := ParseCSV(*quizFile)
+	if *shuffle {
+		quiz = Shuffle(quiz)
+	}
 	askInput()
 	timer := time.NewTimer(time.Duration(*timeLimit) * time.Second)
 	var correct uint
@@ -52,7 +66,7 @@ func main() {
 		go func() {
 			var userAnswer string
 			fmt.Scanf("%s\n", &userAnswer)
-			answerCh <- userAnswer
+			answerCh <- strings.ToLower(strings.TrimSpace(userAnswer))
 		}()
 		select {
 		case <-timer.C:
