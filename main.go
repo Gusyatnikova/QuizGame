@@ -40,6 +40,7 @@ func askInput() {
 
 func Shuffle(slice [][]string) [][]string {
 	dst := make([][]string, len(slice))
+	rand.Seed(time.Now().UnixNano())
 	perm := rand.Perm(len(slice))
 	for i, v := range perm {
 		dst[v] = slice[i]
